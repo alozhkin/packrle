@@ -3,10 +3,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import packrle.Archiver;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 
 public class ArchiverTest {
@@ -16,20 +13,21 @@ public class ArchiverTest {
 
     @Test
     public void ArchiverTest() throws IOException {
-        final String input = "";
-        final String output = "";
-        final String unpack = "";
+        final String input = "inputFile.txt";
+        final String output = "outputFile.txt";
+        final String unpack = "unpackFile.txt";
 
         InnerFun fun = new InnerFun() {
             @Override
             public void test(String inputStr, String shouldBe) throws IOException {
-                try (FileReader rdOutput = new FileReader(output)) {
-                    try (FileWriter wrInput = new FileWriter(input)) {
-                        try (FileReader rdUnpack = new FileReader(unpack)) {
+                ClassLoader cl = getClass().getClassLoader();
+                try (FileReader rdOutput = new FileReader(cl.getResource(output).getFile())) {
+                    try (FileWriter wrInput = new FileWriter(cl.getResource(input).getFile())) {
+                        try (FileReader rdUnpack = new FileReader(cl.getResource(unpack).getFile())) {
                             wrInput.write(inputStr);
                             wrInput.close();
                             Archiver arc = new Archiver();
-                            arc.pack(input, output);
+                            arc.pack(cl.getResource(input).getFile(), cl.getResource(output).getFile());
                             StringBuilder outputStr = new StringBuilder();
                             int sym = rdOutput.read();
                             while (sym != -1) {
@@ -37,7 +35,7 @@ public class ArchiverTest {
                                 sym = rdOutput.read();
                             }
                             Assert.assertEquals(shouldBe, outputStr.toString());
-                            arc.unpack(output, unpack);
+                            arc.unpack(cl.getResource(output).getFile(), cl.getResource(unpack).getFile());
                             StringBuilder unpackStr = new StringBuilder();
                             int unSym = rdUnpack.read();
                             while (unSym != -1) {
