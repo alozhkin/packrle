@@ -1,33 +1,58 @@
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import packrle.Archiver;
-
 import java.io.*;
 
 
 public class ArchiverTest {
+    private File inputFile;
+    private File outputFile;
+    private File unpackFile;
+
     interface InnerFun {
         void test(String inputStr, String shouldBe) throws IOException;
     }
 
+    @Before
+    public void initialize() {
+        try {
+            inputFile = File.createTempFile("ArchiverInputTempFile", null);
+            outputFile = File.createTempFile("ArchiverOutputTempFile", null);
+            unpackFile = File.createTempFile("ArchiverUnpackTempFile", null);
+        } catch (IOException e) {
+            System.out.print(e.getMessage());
+        }
+    }
+
+    @After
+    public void delete() {
+        if (!inputFile.delete()) {
+            System.out.println("Failed to delete the file tempInputFile.txt");
+        }
+        if (!outputFile.delete()) {
+            System.out.println("Failed to delete the file tempOutputFile.txt");
+        }
+        if (!unpackFile.delete()) {
+            System.out.println("Failed to delete the file tempUnpackFile.txt");
+        }
+    }
+
     @Test
     public void ArchiverTest() throws IOException {
-        final String input = "inputFile.txt";
-        final String output = "outputFile.txt";
-        final String unpack = "unpackFile.txt";
-
         InnerFun fun = new InnerFun() {
             @Override
             public void test(String inputStr, String shouldBe) throws IOException {
                 ClassLoader cl = getClass().getClassLoader();
-                try (FileReader rdOutput = new FileReader(cl.getResource(output).getFile())) {
-                    try (FileWriter wrInput = new FileWriter(cl.getResource(input).getFile())) {
-                        try (FileReader rdUnpack = new FileReader(cl.getResource(unpack).getFile())) {
+                try (FileReader rdOutput = new FileReader(outputFile)) {
+                    try (FileWriter wrInput = new FileWriter(inputFile)) {
+                        try (FileReader rdUnpack = new FileReader(unpackFile)) {
                             wrInput.write(inputStr);
                             wrInput.close();
                             Archiver arc = new Archiver();
-                            arc.pack(cl.getResource(input).getFile(), cl.getResource(output).getFile());
+                            arc.pack(inputFile.getCanonicalPath(), outputFile.getCanonicalPath());
                             StringBuilder outputStr = new StringBuilder();
                             int sym = rdOutput.read();
                             while (sym != -1) {
@@ -35,7 +60,7 @@ public class ArchiverTest {
                                 sym = rdOutput.read();
                             }
                             Assert.assertEquals(shouldBe, outputStr.toString());
-                            arc.unpack(cl.getResource(output).getFile(), cl.getResource(unpack).getFile());
+                            arc.unpack(outputFile.getCanonicalPath(), unpackFile.getCanonicalPath());
                             StringBuilder unpackStr = new StringBuilder();
                             int unSym = rdUnpack.read();
                             while (unSym != -1) {

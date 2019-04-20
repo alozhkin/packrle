@@ -20,7 +20,7 @@ public class ArchiverLauncher {
     private boolean isOut;
 
     @Argument
-    private List<String> arguments = new ArrayList<String>();
+    private List<String> arguments = new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -31,6 +31,7 @@ public class ArchiverLauncher {
         CmdLineParser parser = new CmdLineParser(this);
         try {
             parser.parseArgument(args);
+            if (arguments.isEmpty() || !unpacking && !packing) throw new CmdLineException(parser, new Exception());
         } catch (CmdLineException e) {
             System.err.println(e.getMessage());
             System.err.println("java -jar packrle.jar [-z|-u] [-out outputname.txt] inputname.txt");
